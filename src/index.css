@@ -1,0 +1,43 @@
+/* Сброс отступов */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+}
+
+/* Кнопки */
+button {
+    padding: 10px 20px;
+    background: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+}
+
+button:hover:not(:disabled) {
+    background: #1259a8;
+}
+
+button:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+}
+
+/* Drag & Drop */
+.dragover {
+    border-color: #1259a8 !important;
+    background: #e3f2fd;
+}
+
+/* Ссылки в истории */
+a {
+    text-decoration: none;
+    color: #1976d2;
+}
+
+a:hover {
+    text-decoration: underline;
+}
