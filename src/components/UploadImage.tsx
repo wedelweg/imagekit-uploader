@@ -77,11 +77,7 @@ const UploadImage: React.FC = () => {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("fileName", file.name);
-        formData.append(
-            "publicKey",
-            import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY ||
-            "public_yv2tW6glCoeLBRuNQ6OCfOmd6F0="
-        );
+        formData.append("publicKey", import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY);
         formData.append("signature", freshAuth.signature);
         formData.append("expire", freshAuth.expire);
         formData.append("token", freshAuth.token);
