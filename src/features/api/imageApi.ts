@@ -1,22 +1,41 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { API_BASE_URL } from "../../config";
+
+export interface AuthResponse {
+    signature: string;
+    token: string;
+    expire: number;
+}
+
+export interface ImageKitUploadResponse {
+    fileId: string;
+    name: string;
+    url: string;
+}
+
+export interface DeleteResponse {
+    success: boolean;
+}
 
 export const imageApi = createApi({
     reducerPath: "imageApi",
-    baseQuery: fetchBaseQuery({ baseUrl: "/" }),
+    baseQuery: fetchBaseQuery({
+        baseUrl: API_BASE_URL,
+    }),
     endpoints: (builder) => ({
-        // Получаем auth от backend
-        getAuth: builder.query<any, void>({
-            query: () => "http://localhost:4000/auth",
+        getAuth: builder.query<AuthResponse, void>({
+            query: () => "/auth",
         }),
 
-        // Загружаем файл в ImageKit
-        uploadImage: builder.mutation<any, { formData: FormData; auth: any }>({
-            // queryFn используется вместо query
-            queryFn: async ({ formData, auth }) => {
+        uploadImage: builder.mutation<
+            ImageKitUploadResponse,
+            { formData: FormData; auth: AuthResponse }
+        >({
+            async queryFn({ formData, auth }) {
                 try {
-                    // добавляем auth-параметры
+
                     formData.append("signature", auth.signature);
-                    formData.append("expire", auth.expire);
+                    formData.append("expire", String(auth.expire));
                     formData.append("token", auth.token);
 
                     const response = await fetch(
@@ -31,21 +50,32 @@ export const imageApi = createApi({
                         return {
                             error: {
                                 status: response.status,
-                                error: response.statusText,
+                                error: await response.text(),
                             } as any,
                         };
                     }
 
-                    const data = await response.json();
+                    const data = (await response.json()) as ImageKitUploadResponse;
                     return { data };
                 } catch (err: any) {
                     return {
-                        error: { status: "CUSTOM_ERROR", error: err.message } as any,
+                        error: { status: "CUSTOM_ERROR", error: err?.message ?? "Upload failed" } as any,
                     };
                 }
             },
         }),
+
+        deleteFile: builder.mutation<DeleteResponse, string>({
+            query: (fileId) => ({
+                url: `/api/delete/${fileId}`,
+                method: "DELETE",
+            }),
+        }),
     }),
 });
 
-export const { useGetAuthQuery, useUploadImageMutation } = imageApi;
+export const {
+    useGetAuthQuery,
+    useUploadImageMutation,
+    useDeleteFileMutation,
+} = imageApi;

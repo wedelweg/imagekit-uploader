@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useGetAuthQuery } from "../features/api/imageApi";
+import { API_BASE_URL, IMAGEKIT_PUBLIC_KEY } from "../config";
 
 interface UploadHistoryItem {
     url: string;
@@ -19,20 +20,21 @@ const UploadImage: React.FC = () => {
 
     const dropRef = useRef<HTMLDivElement | null>(null);
 
-    const API_BASE_URL =
-        import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
-
+    // подпись с backend
     const { data: auth, refetch } = useGetAuthQuery();
 
+    // поднимаем историю из localStorage
     useEffect(() => {
         const saved = localStorage.getItem("uploadHistory");
         if (saved) setHistory(JSON.parse(saved));
     }, []);
 
+    // сохраняем историю
     useEffect(() => {
         localStorage.setItem("uploadHistory", JSON.stringify(history));
     }, [history]);
 
+    // drag & drop
     useEffect(() => {
         const div = dropRef.current;
         if (!div) return;
@@ -72,15 +74,16 @@ const UploadImage: React.FC = () => {
     const handleUpload = async () => {
         if (!file || !auth) return;
 
+        // берём свежие токены (чтобы не истекли)
         const freshAuth = await refetch().unwrap();
 
         const formData = new FormData();
         formData.append("file", file);
         formData.append("fileName", file.name);
-        formData.append("publicKey", import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY);
-        formData.append("signature", freshAuth.signature);
-        formData.append("expire", freshAuth.expire);
-        formData.append("token", freshAuth.token);
+        formData.append("publicKey", String(IMAGEKIT_PUBLIC_KEY));
+        formData.append("signature", String(freshAuth.signature));
+        formData.append("expire", String(freshAuth.expire));
+        formData.append("token", String(freshAuth.token));
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "https://upload.imagekit.io/api/v1/files/upload");
@@ -119,7 +122,6 @@ const UploadImage: React.FC = () => {
                     method: "DELETE",
                 });
                 if (!res.ok) throw new Error("Error deleting file");
-                console.log("File deleted:")
                 setHistory((prev) => prev.filter((item) => item.fileId !== fileId));
             } catch (err) {
                 console.error(err);
@@ -181,10 +183,9 @@ const UploadImage: React.FC = () => {
                 <input
                     id="fileInput"
                     type="file"
+                    accept="image/*"
                     style={{ display: "none" }}
-                    onChange={(e) =>
-                        e.target.files && handleFileSelect(e.target.files[0])
-                    }
+                    onChange={(e) => e.target.files && handleFileSelect(e.target.files[0])}
                 />
             </div>
 
@@ -239,8 +240,7 @@ const UploadImage: React.FC = () => {
                         style={{
                             width: `${progress}%`,
                             height: "16px",
-                            background:
-                                "linear-gradient(90deg, #1976d2, #42a5f5, #1976d2)",
+                            background: "linear-gradient(90deg, #1976d2, #42a5f5, #1976d2)",
                             backgroundSize: "200% 100%",
                             animation: "progressAnim 1.5s linear infinite",
                             color: "#fff",
@@ -255,7 +255,7 @@ const UploadImage: React.FC = () => {
                 </div>
             )}
 
-            {/* History */}
+            {/* История */}
             <div style={{ marginTop: "40px", textAlign: "left" }}>
                 <h3 style={{ display: "flex", alignItems: "center" }}>
                     История загрузок
@@ -291,6 +291,7 @@ const UploadImage: React.FC = () => {
                     {history.map((item) => {
                         const ext = item.name.split(".").pop()?.toUpperCase() || "FILE";
                         const isLoaded = loaded[item.fileId];
+
                         return (
                             <div
                                 key={item.fileId}
@@ -305,8 +306,7 @@ const UploadImage: React.FC = () => {
                                     cursor: "pointer",
                                     transition: "all 0.4s ease",
                                     opacity: deleting === item.fileId ? 0 : 1,
-                                    transform:
-                                        deleting === item.fileId ? "scale(0.9)" : "scale(1)",
+                                    transform: deleting === item.fileId ? "scale(0.9)" : "scale(1)",
                                     animation: "fadeIn 0.4s ease",
                                 }}
                             >
@@ -321,10 +321,7 @@ const UploadImage: React.FC = () => {
                                     {ext}
                                 </div>
 
-                                <div
-                                    style={{ flexGrow: 1 }}
-                                    onClick={() => setSelectedImage(item.url)}
-                                >
+                                <div style={{ flexGrow: 1 }} onClick={() => setSelectedImage(item.url)}>
                                     {!isLoaded && (
                                         <div
                                             style={{
@@ -396,7 +393,7 @@ const UploadImage: React.FC = () => {
                 </div>
             </div>
 
-            {/* modalka */}
+            {/* Модалка */}
             {selectedImage && (
                 <div
                     onClick={closeModal}
@@ -411,9 +408,7 @@ const UploadImage: React.FC = () => {
                         alignItems: "center",
                         justifyContent: "center",
                         zIndex: 999,
-                        animation: closingModal
-                            ? "fadeOut 0.3s ease forwards"
-                            : "fadeIn 0.3s ease",
+                        animation: closingModal ? "fadeOut 0.3s ease forwards" : "fadeIn 0.3s ease",
                     }}
                 >
                     <img
@@ -424,9 +419,7 @@ const UploadImage: React.FC = () => {
                             maxHeight: "90%",
                             borderRadius: "12px",
                             boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-                            animation: closingModal
-                                ? "zoomOut 0.3s ease forwards"
-                                : "zoomIn 0.3s ease",
+                            animation: closingModal ? "zoomOut 0.3s ease forwards" : "zoomIn 0.3s ease",
                         }}
                     />
                 </div>
@@ -435,31 +428,31 @@ const UploadImage: React.FC = () => {
             {/* CSS */}
             <style>
                 {`
-        @keyframes loadingShimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes fadeOut {
-          from { opacity: 1; }
-          to { opacity: 0; }
-        }
-        @keyframes zoomIn {
-          from { transform: scale(0.8); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        @keyframes zoomOut {
-          from { transform: scale(1); opacity: 1; }
-          to { transform: scale(0.9); opacity: 0; }
-        }
-        @keyframes progressAnim {
-          from { background-position: 200% 0; }
-          to { background-position: -200% 0; }
-        }
-      `}
+          @keyframes loadingShimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+          }
+          @keyframes zoomIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+          }
+          @keyframes zoomOut {
+            from { transform: scale(1); opacity: 1; }
+            to { transform: scale(0.9); opacity: 0; }
+          }
+          @keyframes progressAnim {
+            from { background-position: 200% 0; }
+            to { background-position: -200% 0; }
+          }
+        `}
             </style>
         </div>
     );
