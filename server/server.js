@@ -7,11 +7,10 @@ dotenv.config();
 
 const app = express();
 
-// ✅ список разрешённых источников
 const allowedOrigins = [
-    "http://localhost:5173",                              // локальная разработка
-    "https://wedelweg.github.io",                         // GitHub Pages профиль
-    "https://wedelweg.github.io/imagekit-uploader"        // твой проект на Pages
+    "http://localhost:5173",
+    "https://wedelweg.github.io",
+    "https://wedelweg.github.io/imagekit-uploader"
 ];
 
 // CORS
@@ -62,5 +61,5 @@ app.delete("/api/delete/:fileId", async (req, res) => {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-    console.log(`✅ Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
