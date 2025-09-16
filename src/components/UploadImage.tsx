@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useGetAuthQuery } from "../features/api/imageApi";
-import { API_BASE_URL, IMAGEKIT_PUBLIC_KEY } from "../config";
 
 interface UploadHistoryItem {
     url: string;
@@ -80,10 +79,10 @@ const UploadImage: React.FC = () => {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("fileName", file.name);
-        formData.append("publicKey", String(IMAGEKIT_PUBLIC_KEY));
-        formData.append("signature", String(freshAuth.signature));
+        formData.append("publicKey", import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY!);
+        formData.append("signature", freshAuth.signature);
         formData.append("expire", String(freshAuth.expire));
-        formData.append("token", String(freshAuth.token));
+        formData.append("token", freshAuth.token);
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "https://upload.imagekit.io/api/v1/files/upload");
@@ -118,7 +117,11 @@ const UploadImage: React.FC = () => {
         setDeleting(fileId);
         setTimeout(async () => {
             try {
-                const res = await fetch(`${API_BASE_URL}/api/delete/${fileId}`, {
+                const baseUrl = import.meta.env.VITE_AUTH_ENDPOINT?.replace(
+                    "/api/imagekit/auth",
+                    ""
+                );
+                const res = await fetch(`${baseUrl}/api/delete/${fileId}`, {
                     method: "DELETE",
                 });
                 if (!res.ok) throw new Error("Error deleting file");
@@ -185,7 +188,9 @@ const UploadImage: React.FC = () => {
                     type="file"
                     accept="image/*"
                     style={{ display: "none" }}
-                    onChange={(e) => e.target.files && handleFileSelect(e.target.files[0])}
+                    onChange={(e) =>
+                        e.target.files && handleFileSelect(e.target.files[0])
+                    }
                 />
             </div>
 
@@ -240,7 +245,8 @@ const UploadImage: React.FC = () => {
                         style={{
                             width: `${progress}%`,
                             height: "16px",
-                            background: "linear-gradient(90deg, #1976d2, #42a5f5, #1976d2)",
+                            background:
+                                "linear-gradient(90deg, #1976d2, #42a5f5, #1976d2)",
                             backgroundSize: "200% 100%",
                             animation: "progressAnim 1.5s linear infinite",
                             color: "#fff",
@@ -306,7 +312,8 @@ const UploadImage: React.FC = () => {
                                     cursor: "pointer",
                                     transition: "all 0.4s ease",
                                     opacity: deleting === item.fileId ? 0 : 1,
-                                    transform: deleting === item.fileId ? "scale(0.9)" : "scale(1)",
+                                    transform:
+                                        deleting === item.fileId ? "scale(0.9)" : "scale(1)",
                                     animation: "fadeIn 0.4s ease",
                                 }}
                             >
@@ -321,7 +328,10 @@ const UploadImage: React.FC = () => {
                                     {ext}
                                 </div>
 
-                                <div style={{ flexGrow: 1 }} onClick={() => setSelectedImage(item.url)}>
+                                <div
+                                    style={{ flexGrow: 1 }}
+                                    onClick={() => setSelectedImage(item.url)}
+                                >
                                     {!isLoaded && (
                                         <div
                                             style={{
@@ -408,7 +418,9 @@ const UploadImage: React.FC = () => {
                         alignItems: "center",
                         justifyContent: "center",
                         zIndex: 999,
-                        animation: closingModal ? "fadeOut 0.3s ease forwards" : "fadeIn 0.3s ease",
+                        animation: closingModal
+                            ? "fadeOut 0.3s ease forwards"
+                            : "fadeIn 0.3s ease",
                     }}
                 >
                     <img
@@ -419,7 +431,9 @@ const UploadImage: React.FC = () => {
                             maxHeight: "90%",
                             borderRadius: "12px",
                             boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-                            animation: closingModal ? "zoomOut 0.3s ease forwards" : "zoomIn 0.3s ease",
+                            animation: closingModal
+                                ? "zoomOut 0.3s ease forwards"
+                                : "zoomIn 0.3s ease",
                         }}
                     />
                 </div>
