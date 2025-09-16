@@ -7,39 +7,39 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = [
-    "http://localhost:5173",
-    "https://wedelweg.github.io",
-    "https://wedelweg.github.io/imagekit-uploader"
-];
+const rawOrigins = process.env.CLIENT_ORIGIN || "";
+const allowedOrigins = rawOrigins
+    .split(",")
+    .map(o => o.trim())
+    .filter(Boolean);
 
-// CORS
 app.use(
     cors({
-        origin: function (origin, callback) {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error("Not allowed by CORS"));
-            }
+        origin(origin, cb) {
+            // Для Postman/cURL и SSR-запросов без Origin — разрешаем
+            if (!origin) return cb(null, true);
+            // Разрешаем, если домен в списке
+            if (allowedOrigins.includes(origin)) return cb(null, true);
+            // Иначе — блокируем
+            cb(new Error(`Not allowed by CORS: ${origin}`));
         },
         methods: ["GET", "POST", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],
     })
 );
-
 app.options("*", cors());
+
 app.use(express.json());
 
-// Init ImageKit
+// --- ImageKit ---
 const imagekit = new ImageKit({
     publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
     privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
     urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
 });
 
-// Auth route
-app.get("/auth", (req, res) => {
+// Подпись
+app.get("/auth", (_req, res) => {
     try {
         const auth = imagekit.getAuthenticationParameters();
         res.json(auth);
@@ -48,7 +48,7 @@ app.get("/auth", (req, res) => {
     }
 });
 
-// Delete route
+// Удаление
 app.delete("/api/delete/:fileId", async (req, res) => {
     try {
         const { fileId } = req.params;
@@ -61,5 +61,5 @@ app.delete("/api/delete/:fileId", async (req, res) => {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`✅ Server running on port ${PORT}`);
 });
