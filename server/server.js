@@ -7,17 +7,29 @@ dotenv.config();
 
 const app = express();
 
+// ✅ список разрешённых источников
+const allowedOrigins = [
+    "http://localhost:5173",                              // локальная разработка
+    "https://wedelweg.github.io",                         // GitHub Pages профиль
+    "https://wedelweg.github.io/imagekit-uploader"        // твой проект на Pages
+];
+
 // CORS
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "*";
 app.use(
     cors({
-        origin: CLIENT_ORIGIN,
+        origin: function (origin, callback) {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error("Not allowed by CORS"));
+            }
+        },
         methods: ["GET", "POST", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],
     })
 );
-app.options("*", cors());
 
+app.options("*", cors());
 app.use(express.json());
 
 // Init ImageKit
