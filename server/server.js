@@ -7,6 +7,7 @@ dotenv.config();
 
 const app = express();
 
+// --- CORS ---
 const rawOrigins = process.env.CLIENT_ORIGIN || "";
 const allowedOrigins = rawOrigins
     .split(",")
@@ -16,11 +17,11 @@ const allowedOrigins = rawOrigins
 app.use(
     cors({
         origin(origin, cb) {
-            // Для Postman/cURL и SSR-запросов без Origin — разрешаем
+            // Разрешаем Postman/cURL и SSR-запросы без Origin
             if (!origin) return cb(null, true);
-            // Разрешаем, если домен в списке
+            // Разрешаем, если домен есть в списке
             if (allowedOrigins.includes(origin)) return cb(null, true);
-            // Иначе — блокируем
+            // Блокируем, если Origin не совпадает
             cb(new Error(`Not allowed by CORS: ${origin}`));
         },
         methods: ["GET", "POST", "DELETE", "OPTIONS"],
@@ -38,8 +39,8 @@ const imagekit = new ImageKit({
     urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
 });
 
-// Подпись
-app.get("/auth", (_req, res) => {
+// 🔑 Подпись для загрузки
+app.get("/api/imagekit/auth", (_req, res) => {
     try {
         const auth = imagekit.getAuthenticationParameters();
         res.json(auth);
@@ -48,7 +49,7 @@ app.get("/auth", (_req, res) => {
     }
 });
 
-// Удаление
+// 🗑️ Удаление файла
 app.delete("/api/delete/:fileId", async (req, res) => {
     try {
         const { fileId } = req.params;
